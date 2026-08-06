@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "id": "gaming-hub-panel",
+  "name": "Gaming Hub Panel",
+  "version": "0.2.0",
+  "type": "integration",
+  "description": "Read-only Pelican and Pterodactyl server-status and metrics integration for Gaming Hub Core.",
+  "author": "Gaming Hub",
+  "homepage": "https://github.com/RosesOfDorns/gaming-hub-panel",
+  "repository": "https://github.com/RosesOfDorns/gaming-hub-panel",
+  "requires": {
+    "gaming-hub-core": "^0.6.0",
+    "azuriom": "^1.2.0",
+    "php": ">=8.2",
+    "extensions": {}
+  },
+  "provides": {
+    "providers": [
+      "pelican",
+      "pterodactyl"
+    ],
+    "capabilities": [
+      "server-status",
+      "metrics"
+    ]
+  },
+  "consumes": {
+    "contracts": [
+      "provider-type-registry",
+      "capability-reader-registry",
+      "shared-data-gateway",
+      "public-data-policy-resolver",
+      "shared-data-cache"
+    ],
+    "capabilities": [
+      "server-status",
+      "metrics"
+    ],
+    "extensions": [
+      "gaming-hub-core"
+    ]
+  },
+  "package": {
+    "plugin_directory": "gaming-hub-panel",
+    "checksum_algorithm": "sha256"
+  },
+  "public_attribution_label": "Gaming Hub Panel"
+}
