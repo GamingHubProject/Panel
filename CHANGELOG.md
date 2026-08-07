@@ -1,52 +1,32 @@
 # Changelog
 
-## 0.1.4 - 2026-08-07
+## 0.2.1
+- Added verified compatibility with Gaming Hub Core 0.7.x while retaining Core 0.6.x support.
+- Kept compatibility bounded to `>=0.6.0 <0.8.0`; unreviewed Core 0.8+ remains rejected.
+- Updated Azuriom and Manager dependency metadata so Gaming Hub Core is declared consistently through the supported extension dependency map.
+- Updated official repository metadata to `GamingHubProject/Panel`.
+- Added `SharedDataGateway` to the compatibility probe because Panel directly consumes that Core contract.
+- Updated compatibility, packaging, boot, provider-registration, and metadata regression tests for Core 0.7.0.
 
-- Fixed immediate dependency resolution after installing Gaming Hub Core by reconciling filesystem-backed installed metadata before validating the next package.
-- Made the installed filesystem manifest version authoritative for dependency checks; Manager metadata is reconciled from that installed state and registry release metadata cannot satisfy dependencies.
-- Standardized all package dependency checks on normal Composer SemVer semantics with no Gaming Hub Core-specific widening. Under Composer semantics `^0.6.0` means `>=0.6.0 <0.7.0`, so Core `0.7.0` does not satisfy it; packages that support both Core 0.6.x and 0.7.x must declare an explicitly broader constraint such as `>=0.6.0 <0.8.0` or `^0.6.0 || ^0.7.0`.
-- Added detailed dependency-failure diagnostics with candidate package ID, requested dependency ID, installed package IDs and versions, constraint, installed version, and comparison result.
-- Added focused dependency-resolution tests covering immediate Core-to-Panel installation and comparator isolation.
+## 0.2.0
+- Added reusable global Pelican and Pterodactyl Panel Connections.
+- Added encrypted connection-level Application API keys and optional default Client API tokens.
+- Added administrator Test and Discover Servers actions for each connection.
+- Added normalized, refreshable discovered-server storage with stable identifiers and non-destructive missing-server handling.
+- Reworked Panel provider forms to select a matching connection and discovered server instead of repeating Panel URL/Application credentials.
+- Added optional per-server Client-token, timeout, and cache-TTL overrides.
+- Added strict server-side connection/type/server ownership validation and an advanced manual identifier fallback.
+- Preserved v0.1.x direct provider configurations and encrypted credentials until explicit migration.
+- Added connection counts and unambiguous provider-type/configuration/health diagnostics wording.
+- Fixed duplicate Settings and connection-page titles.
+- Added focused dependency-light credential, discovery, mapping, lifecycle, security, and source-contract tests.
 
-## 0.1.3 - 2026-08-06
+## 0.1.1
+- Fixed the Core compatibility probe to use `interface_exists()` for Core contracts.
+- Declared Gaming Hub Core as an Azuriom plugin dependency so Core loads first.
+- Deferred provider and reader registration until the Laravel application is fully booted.
+- Added safe boot diagnostics and administrator-visible compatibility status.
+- Made route, provider, navigation, and duplicate-registration checks explicit and testable.
 
-- Moved the built-in official registry and package repository references to `GamingHubProject`, using `https://raw.githubusercontent.com/GamingHubProject/Registry/main/registry.json` as the sole default registry URL.
-- Changed official-source bootstrap to create or reconcile exactly one protected `GamingHubProject Official Registry` without rewriting user-created custom registries.
-- Added a non-empty legacy-metadata gate so clean installations do not import Core sources, packages, operations, backups, warnings, or throttle markers.
-- Made the filesystem authoritative for installed-package reconciliation; missing directories, invalid `plugin.json` files, and mismatched package IDs now remove stale Manager metadata before catalog state is calculated.
-- Added Manager schema readiness checks for all five Manager tables, including PostgreSQL missing-table handling, and skip runtime preparation safely before or during migrations.
-- Added a safe administration warning page and removed implicit Manager model binding so missing Manager tables cannot be queried before readiness checks.
-- Added focused clean-install, repository migration, legacy gate, filesystem authority, route binding, and migration-readiness verification contracts.
-
-## 0.1.2 - 2026-08-06
-
-- Made published GitHub Releases authoritative for GitHub-backed registry packages; deprecated `latest_version` is now optional and used only as a temporary fallback when GitHub discovery is unavailable.
-- Added semantic release selection across published releases, with draft filtering, stable/prerelease channel enforcement, exact ZIP asset-pattern matching, and source-code archive exclusion.
-- Added SHA-256 checksum priority: explicit checksum asset, selected GitHub release-asset digest, exact version/asset registry pin, then rejection.
-- Added strict GitHub `digest` parsing for `sha256:<64 hex>`, exact selected asset identity binding, and operation-log `checksum_source` metadata.
-- Added tag, versioned asset filename, `plugin.json`, and optional `gaming-hub-extension.json` version-consistency validation before installation or replacement.
-- Registry refresh now invalidates cached GitHub release metadata so newly published releases are discovered without editing registry JSON.
-- Added focused checksum, release-selection, cache-invalidation, generic-package, and version-consistency tests.
-
-## 0.1.1 - 2026-08-06
-
-- Fixed the Laravel reserved `$errors` collision that caused Overview, Installed Packages, Available Packages, Registries, and Install Logs to return HTTP 500.
-- Added type-safe normalization for Laravel validation errors, Manager alert arrays/collections, structured alerts, and success/warning/error flash messages.
-- Renamed catalog and legacy-import domain failures to `managerAlerts` and `warnings`; operational failures now use explicit error flash messages rather than the validation bag.
-- Removed the duplicate horizontal Manager tab bar and retained Azuriom's supported admin sidebar navigation as the sole primary navigation.
-- Removed duplicate page headings while preserving page titles, breadcrumbs, and contextual actions.
-- Added safe installed-package reporting for Gaming Hub Manager itself while preserving self-update, self-reinstall, self-disable, backup, rollback, and uninstall protection.
-- Hardened legacy import against missing tables and malformed or stale records without requiring Gaming Hub Core.
-- Added focused alert, view-contract, navigation, independence, self-detection, and legacy-package compatibility tests.
-
-## 0.1.0 - 2026-08-06
-
-- Added standalone Gaming Hub package lifecycle manager.
-- Added official registry with bundled bootstrap fallback and custom registries.
-- Added direct GitHub Release sources and configurable ZIP/checksum asset patterns.
-- Added install, update, reinstall, enable, disable, uninstall, backup, rollback, and integrity verification.
-- Added transactional file replacement, recovery backups, staged cleanup, and operation logs.
-- Added official/trusted/untrusted source model and explicit warning/confirmation flow.
-- Added non-destructive import of Gaming Hub Core installer sources, installed-package metadata, operation history, and backups.
-- Added automatic discovery of existing Gaming Hub package directories.
-- Added Manager self-protection and independent tables, configuration, routes, storage, permissions, and navigation.
+## 0.1.0
+- Initial read-only Pelican and Pterodactyl providers.

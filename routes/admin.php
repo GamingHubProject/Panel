@@ -1,62 +1,69 @@
 <?php
 
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\BackupController;
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\DashboardController;
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\PackageActionController;
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\PackageController;
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\ReleaseController;
-use Azuriom\Plugin\GamingHubManager\Controllers\Admin\SourceController;
+use Azuriom\Plugin\GamingHubPanel\Controllers\Admin\{
+    ConnectionController,
+    DiagnosticsController,
+    PanelConnectionActionsController,
+    PanelConnectionCredentialsController,
+    PanelConnectionsController,
+    PanelProviderController,
+    SettingsController
+};
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('can:gaminghub.manager.view')->group(function () {
-    Route::get('/', [DashboardController::class, 'overview'])->name('overview');
-    Route::get('/installed', [DashboardController::class, 'installed'])->name('installed');
-    Route::get('/available', [DashboardController::class, 'available'])->name('available');
-    Route::get('/packages/{extension}', [PackageController::class, 'show'])->name('packages.show');
-    Route::get('/sources/{source}/releases/{packageId}', [ReleaseController::class, 'show'])->name('releases.show');
+Route::middleware('can:gaminghub-panel.connections.view')->group(function (): void {
+    Route::get('/connections', [PanelConnectionsController::class, 'index'])->name('connections.index');
+    Route::get('/connections/{connection}/edit', [PanelConnectionsController::class, 'edit'])->name('connections.edit');
 });
 
-Route::middleware('can:gaminghub.manager.sources')->group(function () {
-    Route::get('/registries', [DashboardController::class, 'registries'])->name('registries');
-    Route::post('/sources', [SourceController::class, 'store'])->name('sources.store');
-    Route::patch('/sources/{source}/refresh', [SourceController::class, 'refresh'])->name('sources.refresh');
-    Route::patch('/sources/{source}/toggle', [SourceController::class, 'toggle'])->name('sources.toggle');
-    Route::patch('/sources/{source}/trust', [SourceController::class, 'trust'])->name('sources.trust');
-    Route::delete('/sources/{source}', [SourceController::class, 'destroy'])->name('sources.destroy');
+Route::middleware('can:gaminghub-panel.connections.manage')->group(function (): void {
+    Route::get('/connections/create', [PanelConnectionsController::class, 'create'])->name('connections.create');
+    Route::post('/connections', [PanelConnectionsController::class, 'store'])->name('connections.store');
+    Route::put('/connections/{connection}', [PanelConnectionsController::class, 'update'])->name('connections.update');
+    Route::delete('/connections/{connection}', [PanelConnectionsController::class, 'destroy'])->name('connections.destroy');
+    Route::put('/connections/{connection}/credentials/{slot}', [PanelConnectionCredentialsController::class, 'replace'])
+        ->whereIn('slot', ['application', 'default-client'])
+        ->name('connections.credentials.replace');
+    Route::delete('/connections/{connection}/credentials/{slot}', [PanelConnectionCredentialsController::class, 'remove'])
+        ->whereIn('slot', ['application', 'default-client'])
+        ->name('connections.credentials.remove');
 });
 
-Route::middleware('can:gaminghub.manager.install')->group(function () {
-    Route::post('/sources/{source}/install', [PackageActionController::class, 'install'])->name('packages.install');
+Route::middleware(['can:gaminghub-panel.connections.view', 'can:gaminghub-panel.connections.test'])
+    ->post('/connections/{connection}/test', [PanelConnectionActionsController::class, 'test'])
+    ->name('connections.test');
+Route::middleware(['can:gaminghub-panel.connections.view', 'can:gaminghub-panel.servers.discover'])
+    ->post('/connections/{connection}/discover', [PanelConnectionActionsController::class, 'discover'])
+    ->name('connections.discover');
+Route::middleware(['can:gaminghub-panel.connections.view', 'can:gaminghub-panel.providers.configure'])
+    ->get('/connections/{connection}/servers', [PanelConnectionActionsController::class, 'servers'])
+    ->name('connections.servers');
+
+Route::middleware('can:gaminghub.providers.manage')->group(function (): void {
+    Route::post('/games/{game}/servers/{server}/providers', [PanelProviderController::class, 'store'])->name('providers.store');
+    Route::put('/games/{game}/servers/{server}/providers/{provider}', [PanelProviderController::class, 'update'])->name('providers.update');
 });
 
-Route::middleware('can:gaminghub.manager.update')->group(function () {
-    Route::post('/packages/{extension}/update', [PackageActionController::class, 'update'])->name('packages.update');
-    Route::post('/packages/{extension}/reinstall', [PackageActionController::class, 'reinstall'])->name('packages.reinstall');
-    Route::post('/packages/{extension}/verify', [PackageActionController::class, 'verify'])->name('packages.verify');
+Route::middleware(['can:gaminghub.providers.manage', 'can:gaminghub-panel.providers.configure'])->group(function (): void {
+    Route::put('/games/{game}/servers/{server}/providers/{provider}/credentials/{slot}', [ConnectionController::class, 'replaceToken'])
+        ->whereIn('slot', ['api', 'runtime'])
+        ->name('providers.credentials.replace');
+    Route::delete('/games/{game}/servers/{server}/providers/{provider}/credentials/{slot}', [ConnectionController::class, 'removeToken'])
+        ->whereIn('slot', ['api', 'runtime'])
+        ->name('providers.credentials.remove');
 });
 
-Route::middleware('can:gaminghub.manager.lifecycle')->group(function () {
-    Route::patch('/packages/{extension}/enable', [PackageActionController::class, 'enable'])->name('packages.enable');
-    Route::patch('/packages/{extension}/disable', [PackageActionController::class, 'disable'])->name('packages.disable');
-});
+Route::middleware(['can:gaminghub.providers.view', 'can:gaminghub-panel.connections.test'])
+    ->post('/games/{game}/servers/{server}/providers/{provider}/test', [ConnectionController::class, 'test'])
+    ->name('providers.test');
+Route::middleware(['can:gaminghub.providers.manage', 'can:gaminghub-panel.servers.discover'])
+    ->post('/games/{game}/servers/{server}/providers/{provider}/discover', [ConnectionController::class, 'discover'])
+    ->name('providers.discover');
+Route::middleware(['can:gaminghub.providers.view', 'can:gaminghub-panel.diagnostics.view'])
+    ->get('/games/{game}/servers/{server}/providers/{provider}/diagnostics', [DiagnosticsController::class, 'show'])
+    ->name('providers.diagnostics');
 
-Route::middleware('can:gaminghub.manager.uninstall')->group(function () {
-    Route::get('/packages/{extension}/uninstall', [PackageController::class, 'confirmUninstall'])->name('packages.uninstall.confirm');
-    Route::delete('/packages/{extension}', [PackageController::class, 'destroy'])->name('packages.uninstall');
-});
-
-Route::middleware('can:gaminghub.manager.logs')->group(function () {
-    Route::get('/logs', [DashboardController::class, 'logs'])->name('logs');
-});
-
-Route::middleware('can:gaminghub.manager.backups')->group(function () {
-    Route::get('/backups', [DashboardController::class, 'backups'])->name('backups');
-    Route::post('/packages/{extension}/backup', [PackageActionController::class, 'backup'])->name('packages.backup');
-    Route::post('/backups/{backup}/restore', [BackupController::class, 'restore'])->name('backups.restore');
-    Route::delete('/backups/{backup}', [BackupController::class, 'destroy'])->name('backups.destroy');
-});
-
-Route::middleware('can:gaminghub.manager.settings')->group(function () {
-    Route::get('/settings', [DashboardController::class, 'settings'])->name('settings');
-    Route::put('/settings', [DashboardController::class, 'updateSettings'])->name('settings.update');
+Route::middleware('can:gaminghub-panel.settings.manage')->group(function (): void {
+    Route::get('/settings', [SettingsController::class, 'edit'])->name('settings.edit');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
 });

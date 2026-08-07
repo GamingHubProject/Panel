@@ -1,81 +1,63 @@
-# Root Architecture
+# Architecture
 
-```text
-Azuriom
-├── Gaming Hub Manager
-│   ├── registries and GitHub Releases
-│   ├── install/update/reinstall/uninstall
-│   ├── backup/rollback/integrity
-│   └── operation logs and settings
-├── Gaming Hub Core
-│   ├── games/clusters/servers
-│   ├── providers
-│   ├── public pages
-│   └── Shared Data Gateway
-├── Gaming Hub Panel
-├── Gaming Hub Palworld
-├── Gaming Hub ARK
-└── future packages
-```
+## Two-level model
 
-## Independence boundary
+### Global Panel Connection
 
-Manager has no class, service-provider, route, database, or container dependency on Gaming Hub Core. Core is treated like any other managed package. The only Core-specific behavior is optional legacy metadata import and optional `gaming-hub-core` version constraints in package manifests.
+`PanelConnectionProfile` owns one reusable Pelican or Pterodactyl endpoint and its administrative/default runtime credentials:
 
-## Components
+- normalized base URL;
+- encrypted Application API key;
+- optional encrypted default Client API token;
+- timeout, cache TTL, TLS verification, enabled state;
+- last safe Application API test result.
 
-- `ExtensionSourceManager`: official/custom registry cache and coordinated GitHub release-cache invalidation.
-- `PackageCatalog`: reconciles the filesystem before merging enabled sources with installed package records; selected GitHub release tags provide available versions while deprecated registry hints are fallback-only.
-- `GitHubReleaseClient`: selects the highest semantic published release with a matching uploaded ZIP asset and enforces stable/prerelease policy.
-- `PackageReleaseResolver`: resolves the exact GitHub release/asset and checksum source in explicit-file → GitHub asset digest → exact registry pin order.
-- `GitHubAssetDigestValidator` / `RegistryChecksumResolver`: validate exact selected-asset checksum bindings.
-- `ReleaseVersionValidator`: enforces GitHub tag, versioned asset filename, `plugin.json`, and package-manifest consistency.
-- `ExtensionArchiveInspector`: validates and extracts a one-root Azuriom plugin ZIP.
-- `ExtensionManifestValidator`: normalizes modern Manager manifests or synthesizes one from `plugin.json` plus registry metadata.
-- `ExtensionCompatibility` / `ExtensionDependencyGuard`: enforce Azuriom, PHP, Core, and package requirements.
-- `ExtensionInstaller`: transactional install/update/reinstall with same-filesystem swaps and automatic file rollback.
-- `ExtensionUninstaller`: dependency-safe file uninstall with a verified recovery backup and retained data.
-- `BackupManager`: manual/pre-update/pre-uninstall/pre-rollback backups and verified restoration.
-- `InstalledExtensionResolver`: makes package directories and valid `plugin.json` manifests authoritative, removes stale installed rows, discovers existing Gaming Hub packages including Manager's own installed presence, and reconciles supplemental metadata. Manager self-modification remains blocked.
-- `LegacyMetadataImporter`: idempotent, non-destructive bridge that runs only after non-empty legitimate Core installer metadata or a validated legacy backup is detected.
-- `DirectoryHasher`: deterministic integrity baseline over package files.
-- `ManagerSchema`: checks database availability and all five Manager tables, including PostgreSQL missing-table handling, without suppressing unrelated schema exceptions.
-- `ManagerRuntime`: schema-gated one-request preparation, interrupted-operation closure, official-source bootstrap, reconciliation, staging cleanup, and log retention.
+### Discovered panel server
 
-## Persistence
+`DiscoveredPanelServer` stores only normalized administrative metadata returned by Application API discovery. A refresh upserts by `(connection_id, stable_identifier)`. Servers no longer returned are retained and marked unavailable instead of being deleted.
 
-Manager owns only:
+### Gaming Hub Server provider mapping
 
-- `gaminghub_manager_sources`
-- `gaminghub_manager_packages`
-- `gaminghub_manager_operations`
-- `gaminghub_manager_backups`
-- `gaminghub_manager_settings`
-- `storage/app/gaming-hub-manager/`
+Gaming Hub Core continues to own provider instances. Panel configuration JSON stores only:
 
-## Lifecycle sequence
+- `panel_connection_id`;
+- `panel_server_identifier`;
+- manual-fallback flag;
+- optional public attribution label;
+- optional timeout/cache overrides.
 
-### Install
+The provider-owned encrypted runtime slot is reused only for the optional per-server Client-token override. Global Application credentials are never copied into Core provider configuration or repeated per server.
 
-Discover authoritative GitHub release → resolve exact asset/checksum source → download → checksum/tag/asset/archive/manifest validation → compatibility/dependency validation → same-filesystem staging → atomic move → migrations → optional enable → metadata/integrity baseline → cache refresh.
+## Credential resolution
 
-### Update/reinstall
+Runtime Client credential resolution is:
 
-Resolve installed state → validate candidate → create verified backup → disable if needed → atomic old/new directory swap → migrations → restore enabled state → metadata/integrity update. A failure restores previous files and state where possible.
+1. provider Client-token override;
+2. connection default Client API token;
+3. `configuration_invalid`.
 
-### Uninstall
+Application API keys are used only for connection testing and server discovery. They are not treated as Client API credentials.
 
-Dependency guard → verified backup → disable → guarded directory move → metadata removal → cache refresh → guarded directory deletion. Package database data and migrations are retained.
+## Adapters and Core integration
 
-### Rollback
+- `PelicanClient` and `PterodactylClient` remain distinct adapters with separate identifier validation and response normalization.
+- Four readers register with Gaming Hub Core: Pelican/Pterodactyl × server-status/metrics.
+- Both capabilities reuse one internally cached `PanelSnapshot` per provider.
+- Public consumers use Gaming Hub Core's `SharedDataGateway`; concrete panel clients and connection records remain administration/runtime internals.
+- Public output remains governed exclusively by Core's `PublicDataPolicyResolver` and `publicRead` contracts.
 
-Verify backup hash/manifest → create current-state recovery backup → stage backup → disable current package → atomic replacement → restore captured enabled state → update Manager metadata. Database migrations are not reversed.
+## Legacy compatibility
 
+Provider configurations without `panel_connection_id` use the v0.1.x direct compatibility path. Their original Panel URL, API mode, identifier, TLS/timeout/cache values, and encrypted provider credentials are preserved. Migration is explicit and does not require provider recreation.
 
-## Migration readiness boundary
+## Integrity behavior
 
-Every Manager administration entry checks `ManagerSchema` before querying Manager models. When the connection or schema is incomplete, runtime preparation is skipped and the administration renders a migration-required warning. Route parameters are resolved only after this check, preventing implicit model binding from querying absent tables.
-
-## Admin view boundary
-
-Laravel's shared `$errors` variable remains the validation `ViewErrorBag`. Catalog, registry, legacy-import, and diagnostic messages use explicit Manager contracts such as `$managerAlerts` and `warnings`. The supported Azuriom admin sidebar entry is the sole primary Manager navigation; page views do not render a duplicate tab bar or duplicate layout heading.
+- disabled connections cannot be selected for new mappings;
+- an existing disabled mapping may only be preserved, not silently remapped;
+- connection type must match provider type;
+- a discovered server must belong to the selected connection;
+- connection deletion is blocked while provider mappings reference it;
+- panel type changes are blocked while mappings exist;
+- changing a base URL marks cached discoveries unavailable until refreshed;
+- mappings continue to use their stored stable identifier even when discovery data changes;
+- incomplete mappings and unavailable runtime credentials return `configuration_invalid` instead of crashing public pages.

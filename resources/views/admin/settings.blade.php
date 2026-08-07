@@ -1,42 +1,42 @@
 @extends('admin.layouts.admin')
 
-@section('title', 'Manager Settings')
+@section('title', 'Gaming Hub Panel Settings')
 
 @section('content')
-<div class="container-fluid">
-    @include('gaming-hub-manager::admin.partials.package-warning')
-    @include('gaming-hub-manager::admin.partials.alerts')
+    @include('gaming-hub-panel::admin._boot-diagnostics')
 
-    <div class="row g-4">
-        <div class="col-lg-7">
-            <div class="card">
-                <div class="card-header"><strong>Lifecycle Settings</strong></div>
-                <div class="card-body">
-                    <form method="POST" action="{{ route('gaming-hub-manager.admin.settings.update') }}">
-                        @csrf @method('PUT')
-                        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="retain_successful_update_backups" value="1" id="setting-backups" @checked($settings['retain_successful_update_backups'])><label class="form-check-label" for="setting-backups">Retain successful update and reinstall backups</label></div>
-                        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="auto_import_legacy_core_metadata" value="1" id="setting-import" @checked($settings['auto_import_legacy_core_metadata'])><label class="form-check-label" for="setting-import">Import legacy Gaming Hub Core installer metadata</label></div>
-                        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="allow_private_hosts" value="1" id="setting-private" @checked($settings['allow_private_hosts'])><label class="form-check-label" for="setting-private">Allow administrators to opt into private-host sources</label><div class="form-text">Individual sources must still explicitly enable private-host access.</div></div>
-                        <div class="mb-3"><label class="form-label" for="setting-staging">Delete stale staging after hours</label><input class="form-control" type="number" min="1" max="168" id="setting-staging" name="stale_staging_hours" value="{{ $settings['stale_staging_hours'] }}" required></div>
-                        <div class="mb-3"><label class="form-label" for="setting-logs">Operation log retention days</label><input class="form-control" type="number" min="7" max="3650" id="setting-logs" name="operation_log_retention_days" value="{{ $settings['operation_log_retention_days'] }}" required></div>
-                        <button class="btn btn-primary">Save Settings</button>
-                    </form>
+    <form class="card" method="POST" action="{{ route('gaming-hub-panel.admin.settings.update') }}">
+        @csrf
+        @method('PUT')
+
+        <div class="card-header">Network and security defaults</div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="default_timeout">Default timeout (seconds)</label>
+                    <input class="form-control" id="default_timeout" type="number" min="2" max="30" name="default_timeout" value="{{ old('default_timeout', $settings['default_timeout']) }}" required>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label" for="default_ttl">Default cache TTL (seconds)</label>
+                    <input class="form-control" id="default_ttl" type="number" min="5" max="300" name="default_ttl" value="{{ old('default_ttl', $settings['default_ttl']) }}" required>
                 </div>
             </div>
-        </div>
-        <div class="col-lg-5">
-            <div class="card">
-                <div class="card-header"><strong>Compatibility Diagnostics</strong></div>
-                <div class="card-body">
-                    <dl class="row mb-0">
-                        <dt class="col-sm-5">PHP</dt><dd class="col-sm-7">{{ $diagnostics['php'] }}</dd>
-                        <dt class="col-sm-5">ZIP extension</dt><dd class="col-sm-7"><span class="badge bg-{{ $diagnostics['zip'] ? 'success' : 'danger' }}">{{ $diagnostics['zip'] ? 'Available' : 'Missing' }}</span></dd>
-                        <dt class="col-sm-5">Plugins writable</dt><dd class="col-sm-7"><span class="badge bg-{{ $diagnostics['plugin_root_writable'] ? 'success' : 'danger' }}">{{ $diagnostics['plugin_root_writable'] ? 'Yes' : 'No' }}</span><div class="small text-muted text-break">{{ $diagnostics['plugin_root'] }}</div></dd>
-                        <dt class="col-sm-5">Storage writable</dt><dd class="col-sm-7"><span class="badge bg-{{ $diagnostics['storage_root_writable'] ? 'success' : 'danger' }}">{{ $diagnostics['storage_root_writable'] ? 'Yes' : 'No' }}</span><div class="small text-muted text-break">{{ $diagnostics['storage_root'] }}</div></dd>
-                    </dl>
+
+            @foreach([
+                'default_tls_verify' => 'Verify TLS certificates by default for new Panel Connections',
+                'allow_private_hosts' => 'Allow explicitly trusted private/LAN panel hosts',
+                'allow_insecure_http' => 'Allow insecure HTTP panel URLs',
+                'prerelease_warnings' => 'Show prerelease compatibility warnings',
+            ] as $key => $label)
+                <input type="hidden" name="{{ $key }}" value="0">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="{{ $key }}" name="{{ $key }}" value="1" @checked(old($key, $settings[$key]))>
+                    <label class="form-check-label" for="{{ $key }}">{{ $label }}</label>
                 </div>
-            </div>
+            @endforeach
+
+            <div class="alert alert-warning">Private hosts, insecure HTTP, or disabled TLS verification expand the server-side request trust boundary. Use them only for administrator-controlled panels.</div>
+            <button class="btn btn-primary" type="submit">Save settings</button>
         </div>
-    </div>
-</div>
+    </form>
 @endsection

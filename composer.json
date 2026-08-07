@@ -1,16 +1,24 @@
 {
-  "name": "gaming-hub/gaming-hub-manager",
-  "description": "Standalone Gaming Hub package lifecycle manager for Azuriom",
+  "name": "gaming-hub/gaming-hub-panel",
+  "description": "Read-only Pelican and Pterodactyl integration for Gaming Hub Core",
   "type": "azuriom-plugin",
   "license": "MIT",
   "autoload": {
     "psr-4": {
-      "Azuriom\\Plugin\\GamingHubManager\\": "src/"
+      "Azuriom\\Plugin\\GamingHubPanel\\": "src/"
     }
   },
   "require": {
     "php": ">=8.2",
-    "ext-zip": "*",
-    "composer/semver": "^3.4"
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Azuriom\\Plugin\\GamingHubPanel\\Tests\\": "tests/"
+    }
   }
 }
