@@ -1,0 +1,18 @@
+{
+  "id": "gaming-hub-panel",
+  "name": "Gaming Hub Panel",
+  "version": "0.2.1",
+  "description": "Read-only Pelican and Pterodactyl providers for Gaming Hub Core.",
+  "url": "https://github.com/GamingHubProject/Panel",
+  "authors": [
+    "Gaming Hub"
+  ],
+  "azuriom_api": "1.2.0",
+  "providers": [
+    "\\Azuriom\\Plugin\\GamingHubPanel\\Providers\\GamingHubPanelServiceProvider",
+    "\\Azuriom\\Plugin\\GamingHubPanel\\Providers\\RouteServiceProvider"
+  ],
+  "dependencies": {
+    "gaming-hub-core": ">=0.6.0 <0.8.0"
+  }
+}
