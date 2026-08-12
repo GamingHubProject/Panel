@@ -1,0 +1,18 @@
+{
+  "id": "gaming-hub-panel",
+  "name": "Gaming Hub Panel",
+  "version": "0.1.010",
+  "description": "Panel Connector host for Gaming Hub Core (no Connectors currently registered).",
+  "url": "https://github.com/GamingHubProject/Panel",
+  "authors": [
+    "Gaming Hub"
+  ],
+  "azuriom_api": "1.2.0",
+  "providers": [
+    "\\Azuriom\\Plugin\\GamingHubPanel\\Providers\\GamingHubPanelServiceProvider",
+    "\\Azuriom\\Plugin\\GamingHubPanel\\Providers\\RouteServiceProvider"
+  ],
+  "dependencies": {
+    "gaming-hub-core": "*"
+  }
+}

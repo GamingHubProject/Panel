@@ -1,0 +1,25 @@
+{
+  "name": "gaming-hub/gaming-hub-panel",
+  "description": "Panel Connector host for Gaming Hub Core (no Connectors currently registered)",
+  "version": "0.1.010",
+  "type": "azuriom-plugin",
+  "license": "MIT",
+  "autoload": {
+    "psr-4": {
+      "Azuriom\\Plugin\\GamingHubPanel\\": "src/"
+    }
+  },
+  "require": {
+    "php": ">=8.2",
+    "ext-curl": "*",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^11.0"
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Azuriom\\Plugin\\GamingHubPanel\\Tests\\": "tests/"
+    }
+  }
+}

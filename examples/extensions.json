@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "id": "gaming-hub-community",
+  "name": "Gaming Hub Community Extensions",
+  "homepage": "https://github.com/GamingHubProject/Panel",
+  "extensions": [
+    {
+      "id": "gaming-hub-panel",
+      "name": "Gaming Hub Panel",
+      "description": "Global Pelican and Pterodactyl connections with discovery-backed server-status and metrics mappings.",
+      "author": "Gaming Hub",
+      "category": "Integrations",
+      "repository": "https://github.com/GamingHubProject/Panel",
+      "release_asset": "gaming-hub-panel-v*.zip",
+      "checksum_asset": "gaming-hub-panel-v0.1.010.zip.sha256",
+      "latest_version": "0.1.010",
+      "verified": false,
+      "official": false
+    }
+  ]
+}
